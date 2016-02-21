@@ -1,0 +1,78 @@
+---
+title: "SCOTUS over the years"
+author: "Heike Hofmann"
+date: "February 20, 2016"
+output: html_document
+---
+
+```{r, echo=FALSE}
+all <- read.csv("justices-nominations.csv")
+presidents <- read.csv("presidents.csv")
+
+number <- c(6, 5, 7, 9, 10, 7, 9)
+changes <- c(1789, 1801, 1807, 1837, 1863, 1866, 1869)
+
+
+presEnd <- 14
+```
+
+In the days since the death of Justice Antonin Scalia, there has been a lot of discussion on what is going to happen now - whether President Obama should or should not nominate a candidate to fill the vacancy in the supreme court. As I write this, FoxNews reports that Americans are almost [2:1](http://www.foxnews.com/politics/interactive/2016/02/18/fox-news-poll-national-presidential-race-february-18-2016/) in favor of a nomination by President Obama, politifact has rated the claim from the Republican rumour mill of an `80 year old tradition to not nominate a supreme court candidate during an election' as [half right](http://www.politifact.com/truth-o-meter/article/2016/feb/17/misleading-notion-supreme-court-vacancy-hasnt-been/) (which could also be read as half wrong, just to indicate my side of things).
+So what better way to add to the general hubbub than to look at some actual data?
+<p>
+Here goes: the first chart is an overview of the two major time series in question: in black and white from left to right we have the Chief Justice line and the ten Associate Justice (AJ) lines on a time line since the establishment of the supreme court to the present day. The width of the rectangle indicates the time served in office, the fill colour helps with the distinction of whether the justice died while in office (in black), retired or resigned (both in white). Currently serving justices are also shown with white rectangles. It can be seen immediately that since the early 19 hundreds it has become more and more the norm for justices to retire or resign from their office than to serve until death. It has also been pointed out by politifact that the last supreme court justice to be vacated, nominated and confirmed in an election year was 84 years ago in 1932 (when President Herbert Hoover nominated Benjamin Cardozo as a replacement for retiring justice Oliver Wendell Holmes).
+
+```{r, echo=FALSE, fig.width=18, fig.height=8, warning=FALSE}
+library(ggplot2)
+library(lubridate)
+
+all$Line <- factor(all$Line, levels = c("Chief Justice", paste("AJ (seat ",1:10,")",sep="")))
+
+ggplot(data=subset(all, Reason.for!="Rejection")) + 
+  geom_rect(aes(xmin=start, xmax=end-0.1), alpha=0.6,  ymin=0, ymax=presEnd,  fill="grey80", data=subset(presidents, Party=="None")) +
+  geom_rect(aes(xmin=start, xmax=end-0.1), alpha=0.6,  ymin=0, ymax=presEnd,  fill="#ea9978", data=subset(presidents, Party=="Federalist")) +
+  geom_rect(aes(xmin=start, xmax=end-0.1), alpha=0.6,  ymin=0, ymax=presEnd,  fill="#008000", data=subset(presidents, Party %in% c("National-Republican", "Democratic-Republican"))) +
+  geom_rect(aes(xmin=start, xmax=end-0.1), alpha=0.6,  ymin=0, ymax=presEnd,  fill="#F0DC82", data=subset(presidents, Party=="Whig")) +
+  geom_rect(aes(xmin=start, xmax=end-0.1), alpha=0.6,  ymin=0, ymax=presEnd,  fill="#E91D0E", data=subset(presidents, Party=="Republican")) +
+  geom_rect(aes(xmin=start, xmax=end-0.1), alpha=0.6,  ymin=0, ymax=presEnd,  fill="#232066", data=subset(presidents, Party=="Democrat")) +
+  geom_text(aes(x=end, label=Name, y=presEnd-0.1), size=7, data=subset(presidents, !(Party %in% c("Federalist","None", "Whig"))), 
+            vjust=0, hjust=1, angle=90,  nudge_x=-.5,  colour="grey90") +
+  geom_text(aes(x=end, label=Name, y=presEnd-0.1), size=7, data=subset(presidents, (Party %in% c("Federalist", "None", "Whig"))), 
+            vjust=0, hjust=1, angle=90,  nudge_x=-.5,  colour="grey60") +
+#  geom_rect(aes(xmin=elections-1, xmax=elections), ymin=0, ymax=12, fill="grey85", data=data.frame(elections=elections)) +
+#  geom_rect(aes(xmin=changes-0.5, xmax=changes), ymin=0, ymax=12, fill="grey85", data=data.frame(changes=changes)) +
+  geom_rect(aes(xmin=appointed, xmax=terminated, ymin=LineNum-.4, ymax=LineNum+.4,
+                fill=Died, colour= Died), data=subset(all, Result=="confirmed" & Reason.for != "Rejection")) +
+  geom_point(aes(x=year(submit), y=LineNum)) + #, colour=electionYearSubmit)) +
+  geom_label(aes(x=(appointed+terminated)/2, y=LineNum, label=Last, fill=Died, colour=Died), size=3, data=subset(all, Result=="confirmed")) +
+  theme_bw() +
+  #  theme(legend.position="none") + 
+  scale_y_discrete(breaks = 1:11, label=levels(all$Line), limits=1:presEnd) +
+  scale_x_continuous(breaks=c(changes, seq(1788, 2016, by=8)), 
+                     labels=c(paste("\n",c("SCOTUS size: 6",number[-1])), seq(1788, 2016, by=8))) +
+  theme(legend.position="bottom") +
+  scale_fill_manual("", values=c( "black", "grey97")) +
+  scale_colour_manual("", values=c("grey97", "black")) +
+  xlab("Year") +
+  ylab("Justice line") 
+```
+
+Russell Wheeler (Brookings Institution) is quoted saying "Justices in the modern era rarely die in office." There does not seem to be a readily available definition of modern era for the United States - but if we define the modern era as starting post World War I or maybe with the suffrage movement: women were first allowed to vote in the elections of 1920, we can definitely agree with Wheeler. As shown below, we see that the number of deaths while in office outnumbered the resignations and retirements in the pre 1920 era, while since then only 11 justices have died in office, and far more have retired (or resigned). Currently serving justices are excluded from the chart - but note that some justices are counted twice: whenever a justice serves into multiple offices, so e.g. when an associate justice later becomes chief justice, he is counted twice in the chart (e.g. William Rehnquist served as Associate Justice from 1972 onwards until becoming Chief Justice in 1986. In the chart below, he shows up as having resigned from the AJ seat, and later as having died while serving as CJ). 
+
+```{r, echo=FALSE, fig.width=10, fig.height=4, out.width=600}
+all$modern <- all$terminated >= 1920
+all$modern <- factor(all$modern)
+levels(all$modern) <- c("pre 1920", "post 1920")
+all$OutAlive <- all$Reason.for != "Death"
+all$OutAlive <- factor(all$OutAlive)
+levels(all$OutAlive) <- c("Death", "Resignation/Retirement")
+qplot(OutAlive, data=na.omit(subset(all, Result=="confirmed" & Reason.for %in% c("Resignation", "Retirement", "Death"))[,c("modern", "OutAlive")]), fill=OutAlive, colour=I("black")) +
+  theme_bw() + 
+  scale_fill_manual("", values=c( "black", "grey97")) +
+#  scale_colour_manual("", values=c("grey97", "black")) +
+  ggtitle("Number of outgoing Supreme Court Justices") + 
+  coord_flip() +
+  theme(legend.position="none") +
+  xlab("") + 
+  facet_grid(modern~.)
+```
+
