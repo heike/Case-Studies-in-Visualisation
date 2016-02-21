@@ -76,3 +76,77 @@ qplot(OutAlive, data=na.omit(subset(all, Result=="confirmed" & Reason.for %in% c
   facet_grid(modern~.)
 ```
 
+Another question that we might be asking is, how often justices in the modern era leave the office during an election year. This is shown in the chart below, where the number of justices leaving the office  is broken down  by the year of the presidential term. Distinguishing the pre and post 1920 era, we see that there is actually a trend for  justices in the post 1920 era to leave office during the beginning of the presidential term.
+
+```{r, echo=FALSE, fig.width=10, fig.height=4, out.width=600}
+qplot(data=subset(all, Reason.for!="Currently serving"), ((terminated-1) %% 4)+1, facets=modern~., geom="bar", fill=OutAlive) + ggtitle("Justices leaving the office") +
+  xlab("Year in Presidential Term") + ylab("#Terminations") +theme_bw() +
+  scale_x_discrete(breaks=1:4, labels=c(1:3, "Election\nYear"), limits=1:4) +
+  scale_fill_brewer("Leaving Office", palette="Set2") + coord_flip() +
+  theme(legend.position="bottom")
+```
+
+Accordingly, the number of supreme court nominations a president makes  during his term in the post 1920 era is skewed towards the first years of his presidency, as can be seen in the chart below.
+
+```{r, echo=FALSE, fig.width=10, fig.height=4, out.width=600}
+all$modern2 <- year(all$submit) >= 1920
+all$modern2 <- factor(all$modern2)
+levels(all$modern2) <- c("pre 1920", "post 1920")
+
+all$confirmed <- all$Result == "confirmed"
+all$confirmed <- factor(all$confirmed)
+levels(all$confirmed) <- c("rejected/withdrawn/postponed/declined", "confirmed by Senate")
+
+qplot(data=all, ((year(submit)-1) %% 4)+1, facets=modern2~., geom="bar", fill=confirmed) +
+  xlab("Year in Presidential Term") + ylab("#Nominations") +theme_bw() +
+  scale_x_discrete(breaks=1:4, labels=c(1:3, "Election\nYear"), limits=1:4) + coord_flip() +
+  theme(legend.position="bottom") +
+  ggtitle("#Nominating Justices") +
+  scale_fill_brewer("Result", palette="Set2")
+```
+
+###Election year nomination? Last minute nominations!! 
+
+Not only did former presidents nominate supreme court justices in their last year of office, if need be, some of them did so during the last days of their term: Presidents John Adams, Andrew Jackson, Van Buren, John Tyler, John Fillmore, Benjamin Harrison, and Warren Harding all made nominations for supreme court justices in their final days of office, long after the next President was elected. All but President Fillmore could get confirmations from the Senate for their candidate.
+
+So rather than if - we should focus on who will President Barack Obama nominate for the vacant seat?
+
+<!--
+  - John Adams nominated John Marshall on January 20 1801, fifteen days before Thomas Jefferson took office - and the senate approved the nomination on January 27 for fear "lest another not so qualified, and more disgusting to the Bench, should be substituted, and because it appeared that this gentleman [Marshall] was not privy to his own nomination" (Senator Jonathan Dayton). Not exactly a "delay, delay, delay" tactic, even though the seven days were already seen as delaying the confirmation.
+
+  - President Andrew Jackson nominated two(!) supreme court justices on his last full day in office. Catron accepted the nomination and was confirmed by the Congress five days later.
+
+  - President Van Buren nominated Peter Vivan Daniel during his last week as president, and Daniel was confirmed by the senate on March 2, 1841.
+  
+  - On February 4, 1845, Nelson was nominated by President John Tyler to a seat as an Associate Justice on the Supreme Court, it took the Senate only a couple of days to confirm his appointment.
+  
+  - President Fillmore attempted to fill Justice McKinley's seat four times, but only his successor was successful in that.
+  
+  - Howell Edmunds Jackson's  nomination for the supreme court was announced on February 2, 1893 by outgoing president B. Harrison.
+  
+  - President Warren Harding nominated Sanford to the Supreme Court on January 24, 1923, to the seat vacated by Mahlon Pitney. Sanford was confirmed by the Senate, and received his commission, on January 29, 1923.
+  
+
+
+```{r, echo=FALSE}
+presTimes <- data.frame(
+  President = rep(presidents$Last, presidents$end-presidents$start),
+#  Year = rep(presidents$start, presidents$end-presidents$start),
+  Party = rep(presidents$Party, presidents$end-presidents$start)
+  )
+presTimes$Year <- 1789:2015
+
+all$submitYear <- year(all$submit)
+allIn <- merge(all, presTimes, all.x=T, by.x="submitYear", by.y="Year")
+allIn[which(as.character(allIn$President.x)!=as.character(allIn$President.y)),][,c("Judge", "President.x", "President.y")]
+
+```
+-->
+
+###Data and such
+
+All data was scraped from various website and I have taken care to not fish out any inconsistencies and not introduce any mistakes. I still might have, so if you find any problems with the data, just email and we'll get the problems fixed.
+Here's the csv files for all of the data used in the above charts:
+
+  - [Supreme court justices and nominations](justices-nominations.csv)
+  - [Presidents of the United States](presidents.csv)

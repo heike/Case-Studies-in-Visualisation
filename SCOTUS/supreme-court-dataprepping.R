@@ -268,7 +268,7 @@ all$Died <- factor(all$Died)
 levels(all$Died) <- c("Resigned/Retired/Currently Serving", "Died in Office")
 
 
-
+all$Result <- fixStuff(all$Result)
 
 write.csv(presidents, "presidents.csv", row.names=FALSE)
 write.csv(all, "justices-nominations.csv", row.names=FALSE)
